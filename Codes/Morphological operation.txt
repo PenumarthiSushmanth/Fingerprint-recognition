@@ -1,0 +1,30 @@
+
+I=imread('input_1.tif');
+
+
+
+
+J=I(:,:,1)>160;
+
+
+se1 = strel('square',2);
+
+er = imerode(J, se1);
+
+da = imdilate(er, se1);
+
+
+figure(4)
+
+subplot(1,2,1)
+
+imshow(er)
+
+title('Eroded Image');
+
+subplot(1,2,2)
+
+imshow(da)
+
+title('Dilated Image');
+

@@ -1,0 +1,181 @@
+
+clear all,close all,clc
+
+%Reading image
+
+I=imread('input_1.tif');
+
+figure(1), imshow(I), title('Original image');
+
+
+
+%Normalization
+
+
+pixel_num=size(I,1)*size(I,2);
+
+
+hist_img = uint8(zeros(size(I,1),size(I,2)));
+
+freq=zeros(256,1);
+
+probf=zeros(256,1);
+
+probc=zeros(256,1);
+
+cum=zeros(256,1);
+
+output=zeros(256,1);
+
+
+
+for i=1:size(I,1)
+
+    for j=1:size(I,2)
+
+        value=I(i,j);
+
+        freq(value+1)=freq(value+1)+1;
+
+        probf(value+1)=freq(value+1)/pixel_num;
+
+    end
+
+end
+
+
+sum=0;
+
+no_bins=500;
+
+
+
+for i=1:size(probf)
+
+   sum=sum+freq(i);
+
+   cum(i)=sum;
+
+   probc(i)=cum(i)/pixel_num;
+
+   output(i)=round(probc(i)*no_bins);
+
+
+end
+
+
+
+for i=1:size(I,1)
+
+    for j=1:size(I,2)
+
+            hist_img(i,j)=output(I(i,j)+1);
+
+    end
+
+end
+
+
+
+figure(2)
+
+subplot(2,2,1)
+
+imshow(I)
+
+title('Original Image');
+
+subplot(2,2,3)
+
+imhist(I);
+
+subplot(2,2,2)
+
+imshow(hist_img);
+
+title('Histogram equalization');
+
+subplot(2,2,4)
+
+imhist(hist_img);
+
+
+
+
+
+
+%Binarization
+J=hist_img(:,:,1)>160;
+
+figure(3)
+
+imshow(J), title('Binary image');
+
+
+%Morphological operation
+
+
+
+
+se1 = strel('square',2);
+
+er = imerode(J, se1);
+
+da = imdilate(er, se1);
+
+
+figure(4)
+
+subplot(1,2,1)
+
+imshow(er)
+
+title('Eroded Image');
+
+subplot(1,2,2)
+
+imshow(da)
+
+title('Dilated Image');
+
+
+
+
+%Thinning
+
+
+
+
+K=bwmorph(~J,'thin','inf');
+
+figure(5), imshow(~K), title('Thinned image');
+
+
+
+
+
+fun=@(x)median(x(:));
+
+L = nlfilter(K,[3 3],fun);
+
+
+
+
+%Feature extraction
+
+
+
+LBif=(L==1);
+
+LBifLab=bwlabel(LBif);
+
+propBif=regionprops(LBifLab,'Centroid');
+
+CentroidBif=round(cat(1,propBif(:).Centroid));
+
+figure(6)
+
+imshow(~K), title('Minutiae extracted image');
+
+hold on
+plot(CentroidBif(:,1),CentroidBif(:,2),'ro')
